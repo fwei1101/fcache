@@ -8,8 +8,13 @@ project(FCacheSystem)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# 指定头文件目录
+include_directories(caches)
+
 # 指定源文件目录下所有 .cpp 文件
-file(GLOB SOURCES "*.cpp")
+file(GLOB ROOT_SOURCES "*.cpp")
+file(GLOB TEST_SOURCES "tests/*.cpp")
+set(SOURCES ${ROOT_SOURCES} ${TEST_SOURCES})
 
 # 设置目标可执行文件
 add_executable(main ${SOURCES})
