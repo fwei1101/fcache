@@ -15,27 +15,15 @@ namespace FreddyCache
 template <typename Key, typename Value> class FLruCache;
 
 template <typename Key, typename Value>
-class LruNode
+class LruNode : public Node<Key, Value>
 {
-private:
-    Key     key_;
-    Value   value_;
-    size_t  accessCount_;
+public:
     std::weak_ptr<LruNode<Key, Value>> prev_;
     std::shared_ptr<LruNode<Key, Value>> next_;
 public:
     LruNode(Key key, Value value)
-        : key_(key)
-        , value_(value)
-        , accessCount_(1)
+        : Node<Key, Value>(key, value)
     {}
-
-    // 提供必要的访问器
-    Key     getKey() const { return key_; }
-    Value   getValue() const { return value_; }
-    void    setValue(const Value& value) { value_ = value; }
-    size_t  getAccessCount() const { return accessCount_; }
-    void    incrementAccessCount() { ++accessCount_; }
 
     friend class FLruCache<Key, Value>;
 };
@@ -84,7 +72,7 @@ public:
         if (it != nodeMap_.end())
         {
             moveToMostRecent(it->second);
-            value = it->second->value_;
+            value = it->second->getValue();
             return true;
         }
         return false;

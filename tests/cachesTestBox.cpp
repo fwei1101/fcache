@@ -1,17 +1,18 @@
 #include "cachesTestBox.h"
 #include "FLruCache.h"
+#include "FLfuCache.h"
 
-CachesTestBox initCachesTestBox(int capacity, int k, int slices)
+CachesTestBox initCachesTestBox(int capacity, int k, int threshold)
 {
     auto lru = std::make_unique<FreddyCache::FLruCache<int, std::string>>(capacity);
     auto lruk = std::make_unique<FreddyCache::FLruKCache<int, std::string>>(capacity, capacity, k);
-    auto lruhash = std::make_unique<FreddyCache::FHashLruCache<int, std::string>>(capacity, slices);
+    auto lfu = std::make_unique<FreddyCache::FLfuCache<int, std::string>>(capacity, threshold);
 
     CachesTestBox c;
     c.caches.clear(),
     c.caches.emplace_back(std::move(lru));
     c.caches.emplace_back(std::move(lruk));
-    c.caches.emplace_back(std::move(lruhash));
+    c.caches.emplace_back(std::move(lfu));
 
     auto cacheNums = c.caches.size();
     c.hit_counts = std::vector<int>(cacheNums, 0);
@@ -19,7 +20,7 @@ CachesTestBox initCachesTestBox(int capacity, int k, int slices)
     c.cache_names = {
         "LRU",
         "LRU-K" + std::to_string(k),
-        "LRU-H" + std::to_string(slices)
+        "LFU"
     };
     c.average_operation_time = std::vector<double>(cacheNums, 0);
 

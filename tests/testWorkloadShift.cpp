@@ -12,12 +12,12 @@ void testWorkloadShift()
 
     const int CAPACITY = 20;
     const int K = 3;
-    const int SLICES = 4;
+    const int THRESHOLD = 10000;
     const int OPERATIONS = 200000;
     const int PAHSE_LENGTH = OPERATIONS / 5;
 
     // 装载缓存模型
-    auto ctb = initCachesTestBox(CAPACITY, K, SLICES);
+    auto ctb = initCachesTestBox(CAPACITY, K, THRESHOLD);
     auto & caches = ctb.caches;
     auto & hit_counts = ctb.hit_counts;
     auto & get_counts = ctb.get_counts;

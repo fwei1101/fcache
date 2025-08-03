@@ -16,4 +16,4 @@ struct CachesTestBox
     std::vector<double> average_operation_time;
 };
 
-CachesTestBox initCachesTestBox(int capacity, int k, int slices);
+CachesTestBox initCachesTestBox(int capacity, int k, int threshold);

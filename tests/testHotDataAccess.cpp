@@ -12,13 +12,13 @@ void testHotDataAccess()
 
     const int CAPACITY = 20;
     const int K = 3;
-    const int SLICES = 4;
+    const int THRESHOLD = 100;
     const int OPERATIONS = 500000;
     const int HOT_KEYS = 20;
     const int COLD_KEYS = 5000;
 
     // 装载缓存模型
-    auto ctb = initCachesTestBox(CAPACITY, K, SLICES);
+    auto ctb = initCachesTestBox(CAPACITY, K, THRESHOLD);
     auto & caches = ctb.caches;
     auto & hit_counts = ctb.hit_counts;
     auto & get_counts = ctb.get_counts;
