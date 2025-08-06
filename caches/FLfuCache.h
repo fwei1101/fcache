@@ -116,23 +116,20 @@ private:
     using NodeListMap = std::map<size_t, NodeListPtr>;
 
     size_t capacity_;
-    size_t revolveCount_;
     size_t revolvingThreshold_;
+    size_t granularity_;
     NodeMap nodeMap_;
     NodeListMap nodeListMap_;
     std::mutex mutex_;
 
 public:
-    FLfuCache(size_t capacity, size_t revolvingThreshold)
+    FLfuCache(size_t capacity, size_t revolvingThreshold, size_t granularity)
         : capacity_(capacity)
-        , revolveCount_(0)
+        , granularity_(granularity)
         , revolvingThreshold_(revolvingThreshold)
     {}
 
-    ~FLfuCache() override
-    {
-        std::cout << std::endl << "lfu revolved " << revolveCount_ << " times." << std::endl;
-    }
+    ~FLfuCache() override = default;
 
     void put(Key key, Value value) override
     {
@@ -179,29 +176,30 @@ private:
     void incrementAccessCount(NodePtr node)
     {
         size_t accessCount = node->getAccessCount();
-
-        NodeListPtr oldNodeList = nodeListMap_[accessCount];
-        oldNodeList->remove(node);
-
+        size_t oldLevel = accessCount / granularity_;
         if (accessCount < revolvingThreshold_)
+        {
+            accessCount++;
+            node->setAccessCount(accessCount);
+        }
+        size_t newLevel = accessCount / granularity_;
+
+        NodeListPtr oldNodeList = nodeListMap_[oldLevel];
+        oldNodeList->remove(node);
+        if (oldLevel != newLevel)
         {
             if (oldNodeList->isEmpty())
             {
-                nodeListMap_.erase(accessCount);
+                nodeListMap_.erase(oldLevel);
             }
 
-            accessCount++;
-            node->setAccessCount(accessCount);
-            if (nodeListMap_.find(accessCount) == nodeListMap_.end())
+            if (nodeListMap_.find(newLevel) == nodeListMap_.end())
             {
-                nodeListMap_.emplace(accessCount, std::make_shared<NodeList>());
+                nodeListMap_.emplace(newLevel, std::make_shared<NodeList>());
             }
-            nodeListMap_[accessCount]->insert(node);
         }
-        else
-        {
-            oldNodeList->insert(node);
-        }
+        nodeListMap_[newLevel]->insert(node);
+
     }
 
     void evictLeastFrequent()
@@ -220,29 +218,31 @@ private:
     {
         NodePtr node = std::make_shared<Node>(key, value);
         size_t accessCount = node->getAccessCount();
-        if (nodeListMap_.find(accessCount) == nodeListMap_.end())
+        size_t level = accessCount / granularity_;
+        if (nodeListMap_.find(level) == nodeListMap_.end())
         {
-            nodeListMap_.emplace(accessCount, std::make_shared<NodeList>());
+            nodeListMap_.emplace(level, std::make_shared<NodeList>());
         }
-        nodeListMap_[accessCount]->insert(node);
+        nodeListMap_[level]->insert(node);
         nodeMap_[key] = node;
     }
 
     void revolveIfNeeded()
     {
-        auto it = nodeListMap_.find(revolvingThreshold_);
+        size_t thresholdingLevel = revolvingThreshold_ / granularity_;
+        auto it = nodeListMap_.find(thresholdingLevel);
         if (it != nodeListMap_.end() && it->second->getSize() > capacity_ / 2)
         {
             nodeListMap_.clear();
             size_t accessCount = 1;
-            nodeListMap_.emplace(accessCount, std::make_shared<NodeList>());
+            size_t revolvedLevel = accessCount / granularity_;
+            nodeListMap_.emplace(revolvedLevel, std::make_shared<NodeList>());
             for (auto & it : nodeMap_)
             {
                 NodePtr node = it.second;
                 node->setAccessCount(accessCount);
-                nodeListMap_[accessCount]->insert(node);
+                nodeListMap_[revolvedLevel]->insert(node);
             }
-            ++revolveCount_;
         }
     }
 

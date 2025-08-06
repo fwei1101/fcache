@@ -2,11 +2,11 @@
 #include "FLruCache.h"
 #include "FLfuCache.h"
 
-CachesTestBox initCachesTestBox(int capacity, int k, int threshold)
+CachesTestBox initCachesTestBox(int capacity, int k, int threshold, int granularity)
 {
     auto lru = std::make_unique<FreddyCache::FLruCache<int, std::string>>(capacity);
     auto lruk = std::make_unique<FreddyCache::FLruKCache<int, std::string>>(capacity, capacity, k);
-    auto lfu = std::make_unique<FreddyCache::FLfuCache<int, std::string>>(capacity, threshold);
+    auto lfu = std::make_unique<FreddyCache::FLfuCache<int, std::string>>(capacity, threshold, granularity);
 
     CachesTestBox c;
     c.caches.clear(),
